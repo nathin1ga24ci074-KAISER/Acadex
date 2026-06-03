@@ -1,13 +1,21 @@
 <?php
-// ─── citations.php — Citation Management ─────────────────────
+// ─── citations.php — Citation Management (Add, Delete) ───────
 require 'includes/db.php';
 $page_title = 'Citations';
+$msg = ''; $err = '';
  
-$msg = '';
-$err = '';
+// ── DELETE ────────────────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
+    $id = (int)$_POST['citation_id'];
+    $db = get_db();
+    $stmt = $db->prepare("DELETE FROM citations WHERE citation_id = ?");
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $msg = "Citation deleted successfully.";
+}
  
-// ── Add Citation ──────────────────────────────────────────────
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// ── ADD CITATION ──────────────────────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add') {
     $citing = (int)($_POST['citing_paper_id'] ?? 0);
     $cited  = (int)($_POST['cited_paper_id']  ?? 0);
     $ctx    = trim($_POST['context'] ?? '');
@@ -15,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$citing || !$cited)
         $err = 'Both papers must be selected.';
     elseif ($citing === $cited)
-        $err = 'A paper cannot cite itself.';
+        $err = 'A paper cannot cite itself. (Trigger would also block this at DB level)';
     else {
         $db   = get_db();
         $stmt = $db->prepare("INSERT INTO citations (citing_paper_id, cited_paper_id, context) VALUES (?,?,?)");
@@ -28,32 +36,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
  
-// ── All Citations ─────────────────────────────────────────────
+// ── ALL CITATIONS ─────────────────────────────────────────────
 $citations = db_query("
-    SELECT
-        c.citation_id,
-        p1.title  AS citing_title,
-        p1.publication_year AS citing_year,
-        p2.title  AS cited_title,
-        p2.publication_year AS cited_year,
-        c.context
+    SELECT c.citation_id,
+           p1.title  AS citing_title, p1.publication_year AS citing_year,
+           p2.title  AS cited_title,  p2.publication_year AS cited_year,
+           c.context
     FROM citations c
     JOIN papers p1 ON c.citing_paper_id = p1.paper_id
     JOIN papers p2 ON c.cited_paper_id  = p2.paper_id
     ORDER BY c.citation_id DESC
 ");
  
-// ── Papers list for dropdown ──────────────────────────────────
 $papers = db_query("SELECT paper_id, title, publication_year FROM papers ORDER BY publication_year DESC, title");
  
-// ── Citation stats ────────────────────────────────────────────
 $top_cited = db_query("
     SELECT p.title, COUNT(*) AS cnt
     FROM citations c
     JOIN papers p ON c.cited_paper_id = p.paper_id
     GROUP BY c.cited_paper_id
-    ORDER BY cnt DESC
-    LIMIT 5
+    ORDER BY cnt DESC LIMIT 5
 ");
  
 include 'includes/header.php';
@@ -67,20 +69,20 @@ include 'includes/header.php';
 <?php if ($msg): ?><div class="alert alert-success"><?= htmlspecialchars($msg) ?></div><?php endif; ?>
 <?php if ($err): ?><div class="alert alert-error"><?= htmlspecialchars($err) ?></div><?php endif; ?>
  
-<div class="two-col" style="align-items:start; margin-bottom:2rem;">
+<div class="two-col" style="align-items:start;margin-bottom:1.5rem;">
  
-  <!-- Add Citation Form -->
+  <!-- ADD CITATION FORM -->
   <div class="card">
     <div class="card-title"><span class="ct-icon">🔗</span> Add Citation</div>
     <form method="POST" action="citations.php">
+      <input type="hidden" name="action" value="add">
       <div class="form-grid">
         <div class="form-group full">
           <label>Citing Paper (the one that cites) *</label>
           <select name="citing_paper_id" required>
             <option value="">— Select paper —</option>
             <?php foreach ($papers as $p): ?>
-            <option value="<?= $p['paper_id'] ?>"
-              <?= ($_POST['citing_paper_id'] ?? '') == $p['paper_id'] ? 'selected' : '' ?>>
+            <option value="<?= $p['paper_id'] ?>" <?= ($_POST['citing_paper_id'] ?? '') == $p['paper_id'] ? 'selected' : '' ?>>
               [<?= $p['publication_year'] ?>] <?= htmlspecialchars(mb_strimwidth($p['title'], 0, 70, '…')) ?>
             </option>
             <?php endforeach; ?>
@@ -91,17 +93,15 @@ include 'includes/header.php';
           <select name="cited_paper_id" required>
             <option value="">— Select paper —</option>
             <?php foreach ($papers as $p): ?>
-            <option value="<?= $p['paper_id'] ?>"
-              <?= ($_POST['cited_paper_id'] ?? '') == $p['paper_id'] ? 'selected' : '' ?>>
+            <option value="<?= $p['paper_id'] ?>" <?= ($_POST['cited_paper_id'] ?? '') == $p['paper_id'] ? 'selected' : '' ?>>
               [<?= $p['publication_year'] ?>] <?= htmlspecialchars(mb_strimwidth($p['title'], 0, 70, '…')) ?>
             </option>
             <?php endforeach; ?>
           </select>
         </div>
         <div class="form-group full">
-          <label>Citation Context <span style="color:var(--text3)">(optional — sentence where cited)</span></label>
-          <textarea name="context" rows="2"
-                    placeholder="Building on the transformer architecture introduced in…"><?= htmlspecialchars($_POST['context'] ?? '') ?></textarea>
+          <label>Citation Context <span style="color:var(--text3);font-size:0.75rem;">(optional)</span></label>
+          <textarea name="context" rows="2" placeholder="Building on the transformer architecture introduced in…"><?= htmlspecialchars($_POST['context'] ?? '') ?></textarea>
         </div>
       </div>
       <div style="margin-top:1.25rem;">
@@ -110,7 +110,7 @@ include 'includes/header.php';
     </form>
   </div>
  
-  <!-- Most Cited -->
+  <!-- MOST CITED -->
   <div class="card">
     <div class="card-title"><span class="ct-icon">📊</span> Most Referenced Papers</div>
     <?php if ($top_cited): ?>
@@ -150,6 +150,7 @@ include 'includes/header.php';
           <th></th>
           <th>Cited Paper</th>
           <th>Context</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody>
@@ -157,16 +158,27 @@ include 'includes/header.php';
         <tr>
           <td class="mono" style="color:var(--text3);"><?= $i + 1 ?></td>
           <td>
-            <div style="font-size:0.85rem;"><?= htmlspecialchars(mb_strimwidth($c['citing_title'], 0, 50, '…')) ?></div>
+            <div style="font-size:0.85rem;"><?= htmlspecialchars(mb_strimwidth($c['citing_title'], 0, 45, '…')) ?></div>
             <span class="badge badge-blue" style="margin-top:3px;"><?= $c['citing_year'] ?></span>
           </td>
           <td style="font-size:1.2rem;color:var(--accent);text-align:center;">→</td>
           <td>
-            <div style="font-size:0.85rem;"><?= htmlspecialchars(mb_strimwidth($c['cited_title'], 0, 50, '…')) ?></div>
+            <div style="font-size:0.85rem;"><?= htmlspecialchars(mb_strimwidth($c['cited_title'], 0, 45, '…')) ?></div>
             <span class="badge badge-purple" style="margin-top:3px;"><?= $c['cited_year'] ?></span>
           </td>
-          <td style="font-size:0.78rem;color:var(--text3);font-style:italic;max-width:200px;">
-            <?= $c['context'] ? '"' . htmlspecialchars(mb_strimwidth($c['context'], 0, 80, '…')) . '"' : '—' ?>
+          <td style="font-size:0.78rem;color:var(--text3);font-style:italic;max-width:180px;">
+            <?= $c['context'] ? '"'.htmlspecialchars(mb_strimwidth($c['context'],0,70,'…')).'"' : '—' ?>
+          </td>
+          <td>
+            <form method="POST" style="display:inline;">
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="citation_id" value="<?= $c['citation_id'] ?>">
+              <button type="submit" class="btn btn-sm"
+                style="background:rgba(248,113,113,0.15);color:var(--danger);border:1px solid rgba(248,113,113,0.3);"
+                data-confirm="Delete this citation?">
+                🗑️ Delete
+              </button>
+            </form>
           </td>
         </tr>
         <?php endforeach; ?>

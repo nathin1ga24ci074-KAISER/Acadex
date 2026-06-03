@@ -5,1052 +5,1015 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Acadex — Academic Publication Management</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
- 
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --bg:#0a0a0a;
-  --cream:#f0ead6;
-  --gold:#c9a84c;
-  --blue:#2d5af0;
-  --red:#d63031;
-  --text:#f0ead6;
-  --dim:rgba(240,234,214,0.35);
+  --bg:#141210;
+  --bg2:#1a1714;
+  --bg3:#201e1a;
+  --surface:#252219;
+  --border:rgba(201,158,60,0.1);
+  --border-lit:rgba(201,158,60,0.35);
+  --gold:#c99e3c;
+  --gold2:#e8bc5a;
+  --amber:#f59e0b;
+  --text:#f0ead8;
+  --text2:#a89e88;
+  --text3:#5a5244;
   --font-display:'Bebas Neue',sans-serif;
+  --font-serif:'Instrument Serif',serif;
   --font-mono:'DM Mono',monospace;
   --font-body:'DM Sans',sans-serif;
 }
  
-html,body{
-  width:100%;height:100%;
-  overflow:hidden;
+html{scroll-behavior:smooth;}
+ 
+body{
   background:var(--bg);
   color:var(--text);
   font-family:var(--font-body);
+  overflow-x:hidden;
   cursor:none;
 }
  
-/* ── CUSTOM CURSOR ── */
-#cursor{
-  position:fixed;width:12px;height:12px;
-  border-radius:50%;background:var(--cream);
+/* ── CURSOR ── */
+#cur{
+  position:fixed;width:8px;height:8px;
+  background:var(--gold);border-radius:50%;
   pointer-events:none;z-index:9999;
   transform:translate(-50%,-50%);
-  transition:transform .12s,width .2s,height .2s,background .2s;
-  mix-blend-mode:difference;
+  transition:width .25s,height .25s,opacity .25s;
+  mix-blend-mode:screen;
 }
-#cursor.big{width:48px;height:48px;}
- 
-/* ── HORIZONTAL TRACK ── */
-#track{
-  display:flex;
-  width:max-content;
-  height:100vh;
-  will-change:transform;
-  transition:transform .9s cubic-bezier(.16,1,.3,1);
+#cur.grow{width:40px;height:40px;background:rgba(201,158,60,0.2);border:1px solid var(--gold);}
+#cur-trail{
+  position:fixed;width:32px;height:32px;
+  border:1px solid rgba(201,158,60,0.3);border-radius:50%;
+  pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);
+  transition:left .12s ease,top .12s ease;
 }
  
-/* ── PANELS ── */
-.panel{
-  flex-shrink:0;
-  width:100vw;
-  height:100vh;
-  position:relative;
+/* ── NAV ── */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.4rem 3rem;
+  border-bottom:1px solid transparent;
+  transition:background .4s,border-color .4s,backdrop-filter .4s;
+}
+.nav.scrolled{
+  background:rgba(20,18,16,0.88);
+  backdrop-filter:blur(16px);
+  border-color:var(--border);
+}
+.nav-logo{
+  font-family:var(--font-display);
+  font-size:1.6rem;letter-spacing:.12em;
+  color:var(--text);text-decoration:none;
+}
+.nav-logo span{color:var(--gold);}
+.nav-links{display:flex;gap:2.5rem;list-style:none;}
+.nav-links a{
+  font-family:var(--font-mono);font-size:.72rem;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--text2);text-decoration:none;
+  transition:color .2s;
+}
+.nav-links a:hover{color:var(--gold);}
+.nav-cta{
+  font-family:var(--font-mono);font-size:.72rem;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--bg);background:var(--gold);
+  padding:8px 20px;text-decoration:none;
+  transition:background .2s;
+}
+.nav-cta:hover{background:var(--gold2);}
+ 
+/* ── HERO ── */
+.hero{
+  position:relative;min-height:100vh;
+  display:flex;align-items:center;
   overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  padding:0 3rem;
 }
- 
-/* ── NOISE OVERLAY ── */
-.panel::after{
-  content:'';
-  position:absolute;inset:0;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
-  pointer-events:none;opacity:.6;z-index:2;
-}
- 
-/* ── PANEL 0: HERO ── */
-.p0{background:var(--bg);}
  
 .hero-bg-text{
   position:absolute;
   font-family:var(--font-display);
-  font-size:clamp(140px,18vw,280px);
-  letter-spacing:-0.02em;
-  color:rgba(240,234,214,0.04);
-  line-height:0.9;
-  top:50%;transform:translateY(-55%);
+  font-size:clamp(180px,22vw,360px);
+  letter-spacing:-.02em;
+  color:rgba(201,158,60,0.04);
+  line-height:.85;
+  bottom:-0.1em;right:-.05em;
+  user-select:none;pointer-events:none;
   white-space:nowrap;
-  user-select:none;
-  z-index:0;
 }
  
-.hero-content{
-  position:relative;z-index:3;
-  display:flex;flex-direction:column;
-  align-items:center;text-align:center;
-  gap:2rem;
+/* Grain overlay */
+.hero::before{
+  content:'';
+  position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.7;
 }
  
-.hero-eyebrow{
-  font-family:var(--font-mono);
-  font-size:11px;letter-spacing:3px;
-  color:var(--gold);
-  text-transform:uppercase;
-  border:1px solid rgba(201,168,76,0.3);
-  padding:6px 16px;
-  border-radius:2px;
+.hero-inner{
+  position:relative;z-index:2;
+  max-width:1200px;margin:0 auto;width:100%;
+  padding-top:8rem;
+}
+ 
+.hero-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);font-size:.72rem;
+  letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--gold);margin-bottom:2rem;
+}
+.hero-tag::before{
+  content:'';width:24px;height:1px;background:var(--gold);
 }
  
 .hero-title{
   font-family:var(--font-display);
-  font-size:clamp(72px,12vw,180px);
-  line-height:0.88;
-  letter-spacing:-0.01em;
-  mix-blend-mode:normal;
+  font-size:clamp(80px,13vw,200px);
+  line-height:.88;letter-spacing:.01em;
+  color:var(--text);
+  margin-bottom:1.5rem;
+}
+.hero-title em{
+  font-family:var(--font-serif);
+  font-style:italic;
+  color:var(--gold);
+  font-size:.85em;
 }
  
-.hero-title span{color:var(--gold);}
- 
-.hero-sub{
-  font-size:clamp(14px,1.2vw,17px);
-  color:var(--dim);
-  max-width:420px;
-  line-height:1.7;
+.hero-desc{
+  font-size:clamp(15px,1.4vw,18px);
+  color:var(--text2);
+  max-width:480px;
+  line-height:1.75;
   font-weight:300;
-}
- 
-.hero-actions{
-  display:flex;gap:1rem;
-  align-items:center;
-  margin-top:0.5rem;
-}
- 
-.btn-primary{
-  background:var(--cream);
-  color:var(--bg);
-  font-family:var(--font-mono);
-  font-size:11px;letter-spacing:2px;
-  text-transform:uppercase;
-  padding:14px 28px;
-  border:none;cursor:pointer;
-  text-decoration:none;
-  display:inline-block;
-  font-weight:500;
-  transition:background .2s;
-}
-.btn-primary:hover{background:var(--gold);}
- 
-.btn-ghost{
-  font-family:var(--font-mono);
-  font-size:11px;letter-spacing:2px;
-  text-transform:uppercase;
-  color:var(--dim);
-  text-decoration:none;
-  padding:14px 0;
-  border-bottom:1px solid rgba(240,234,214,0.2);
-  transition:color .2s,border-color .2s;
-}
-.btn-ghost:hover{color:var(--cream);border-color:var(--cream);}
- 
-/* scroll hint */
-.scroll-hint{
-  position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-  z-index:3;animation:pulse 2s ease infinite;
-}
-.scroll-hint span{
-  font-family:var(--font-mono);font-size:9px;letter-spacing:3px;
-  color:var(--dim);text-transform:uppercase;
-}
-.scroll-line{width:1px;height:40px;background:var(--dim);transform-origin:top;animation:grow 2s ease infinite;}
-@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
-@keyframes grow{0%{transform:scaleY(0)}50%{transform:scaleY(1)}100%{transform:scaleY(0)}}
- 
-/* panel number */
-.panel-num{
-  position:absolute;bottom:2.5rem;right:2.5rem;
-  font-family:var(--font-mono);font-size:10px;
-  letter-spacing:2px;color:var(--dim);
-  z-index:3;
-}
- 
-/* ── PANEL 1: STATS ── */
-.p1{background:#111;}
- 
-.stats-scene{
-  position:relative;z-index:3;
-  width:90vw;max-width:1100px;
-  display:grid;grid-template-columns:1fr 1fr;
-  gap:1px;
-  border:1px solid rgba(240,234,214,0.08);
-}
- 
-.stat-block{
-  padding:4rem 3.5rem;
-  border:1px solid rgba(240,234,214,0.06);
-  display:flex;flex-direction:column;
-  gap:0.75rem;
-  position:relative;
-  overflow:hidden;
-  transition:background .3s;
-  cursor:default;
-}
-.stat-block:hover{background:rgba(240,234,214,0.03);}
- 
-.stat-block::before{
-  content:attr(data-n);
-  position:absolute;
-  right:2rem;top:50%;transform:translateY(-50%);
-  font-family:var(--font-display);
-  font-size:10rem;
-  color:rgba(240,234,214,0.03);
-  line-height:1;
-  pointer-events:none;
-}
- 
-.stat-num{
-  font-family:var(--font-display);
-  font-size:clamp(64px,6vw,96px);
-  line-height:1;
-  color:var(--cream);
-}
-.stat-num sup{font-size:0.4em;vertical-align:super;color:var(--gold);}
- 
-.stat-label{
-  font-family:var(--font-mono);
-  font-size:10px;letter-spacing:3px;
-  color:var(--dim);text-transform:uppercase;
-}
- 
-.stat-desc{
-  font-size:13px;color:rgba(240,234,214,0.4);
-  line-height:1.6;margin-top:0.5rem;
-  max-width:220px;
-}
- 
-.p1-header{
-  position:absolute;top:3rem;left:50%;transform:translateX(-50%);
-  font-family:var(--font-display);
-  font-size:clamp(48px,5vw,72px);
-  letter-spacing:0.05em;
-  color:rgba(240,234,214,0.06);
-  white-space:nowrap;
-  z-index:1;
-  text-transform:uppercase;
-}
- 
-/* ── PANEL 2: PAPERS (dark editorial) ── */
-.p2{background:var(--cream);}
- 
-.papers-scene{
-  position:relative;z-index:3;
-  width:90vw;max-width:1100px;
-  display:grid;
-  grid-template-columns:340px 1fr;
-  gap:4rem;
-  align-items:center;
-}
- 
-.papers-left h2{
-  font-family:var(--font-display);
-  font-size:clamp(60px,7vw,100px);
-  color:#0a0a0a;
-  line-height:0.9;
-  letter-spacing:0.02em;
-}
-.papers-left h2 em{
-  font-style:normal;
-  color:var(--blue);
-  -webkit-text-stroke:0px;
-}
-.papers-left p{
-  margin-top:1.5rem;
-  font-size:13px;
-  line-height:1.7;
-  color:rgba(10,10,10,0.5);
-  max-width:260px;
-}
-.papers-left a{
-  display:inline-flex;align-items:center;gap:8px;
-  margin-top:1.5rem;
-  font-family:var(--font-mono);font-size:10px;
-  letter-spacing:2px;text-transform:uppercase;
-  color:#0a0a0a;text-decoration:none;
-  border-bottom:1px solid #0a0a0a;
-  padding-bottom:2px;
-  transition:color .2s,border-color .2s;
-}
-.papers-left a:hover{color:var(--blue);border-color:var(--blue);}
- 
-.paper-list-editorial{
-  display:flex;flex-direction:column;
-  gap:0;
-}
- 
-.paper-item{
-  padding:1.4rem 0;
-  border-bottom:1px solid rgba(10,10,10,0.1);
-  display:grid;
-  grid-template-columns:48px 1fr auto;
-  gap:1.25rem;
-  align-items:start;
-  cursor:pointer;
-  transition:background .15s;
-}
-.paper-item:first-child{border-top:1px solid rgba(10,10,10,0.1);}
-.paper-item:hover .pi-title{color:var(--blue);}
- 
-.pi-num{
-  font-family:var(--font-display);
-  font-size:2rem;color:rgba(10,10,10,0.15);
-  line-height:1.1;
-}
-.pi-title{
-  font-size:14px;font-weight:500;
-  color:#0a0a0a;line-height:1.4;
-  transition:color .2s;
-}
-.pi-meta{
-  font-family:var(--font-mono);
-  font-size:9px;letter-spacing:1px;
-  color:rgba(10,10,10,0.35);
-  text-transform:uppercase;
-  margin-top:4px;
-}
-.pi-cite{
-  font-family:var(--font-display);
-  font-size:1.8rem;
-  color:rgba(10,10,10,0.15);
-  line-height:1.2;
-  white-space:nowrap;
-  text-align:right;
-}
-.pi-cite-label{
-  font-family:var(--font-mono);font-size:8px;
-  letter-spacing:1px;color:rgba(10,10,10,0.3);
-  text-transform:uppercase;display:block;
-}
- 
-/* ── PANEL 3: AUTHORS ── */
-.p3{background:#0d0d0d;}
- 
-.authors-scene{
-  position:relative;z-index:3;
-  width:90vw;max-width:1200px;
-}
- 
-.authors-title{
-  font-family:var(--font-display);
-  font-size:clamp(80px,10vw,140px);
-  letter-spacing:0.04em;
-  color:var(--cream);
-  line-height:0.88;
-  margin-bottom:3.5rem;
-}
-.authors-title span{
-  color:transparent;
-  -webkit-text-stroke:1px rgba(240,234,214,0.3);
-}
- 
-.author-grid{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:1px;
-  background:rgba(240,234,214,0.05);
-}
- 
-.author-card{
-  background:#0d0d0d;
-  padding:2rem 1.5rem;
-  display:flex;flex-direction:column;gap:0.5rem;
-  cursor:pointer;
-  transition:background .2s;
-  border:1px solid transparent;
-}
-.author-card:hover{
-  background:#1a1a1a;
-  border-color:rgba(240,234,214,0.08);
-}
- 
-.ac-initials{
-  width:44px;height:44px;
-  border-radius:50%;
-  background:rgba(240,234,214,0.06);
-  border:1px solid rgba(240,234,214,0.1);
-  display:flex;align-items:center;justify-content:center;
-  font-family:var(--font-mono);font-size:12px;
-  color:var(--dim);margin-bottom:0.75rem;
-}
- 
-.ac-name{
-  font-size:14px;font-weight:500;
-  color:var(--cream);line-height:1.3;
-}
-.ac-inst{
-  font-family:var(--font-mono);font-size:9px;
-  letter-spacing:1px;color:var(--dim);
-  text-transform:uppercase;
-}
-.ac-area{
-  font-size:11px;color:rgba(240,234,214,0.3);
-  margin-top:4px;line-height:1.4;
-}
-.ac-stats{
-  display:flex;gap:1rem;margin-top:auto;padding-top:1rem;
-}
-.ac-stat span{
-  font-family:var(--font-display);font-size:1.4rem;
-  color:var(--gold);display:block;line-height:1;
-}
-.ac-stat label{
-  font-family:var(--font-mono);font-size:8px;
-  letter-spacing:1px;color:var(--dim);
-  text-transform:uppercase;
-}
- 
-/* ── PANEL 4: CITATIONS ── */
-.p4{background:#f5f0e8;}
- 
-.citations-scene{
-  position:relative;z-index:3;
-  width:90vw;max-width:1100px;
-  display:grid;
-  grid-template-columns:1fr 480px;
-  gap:5rem;
-  align-items:center;
-}
- 
-.cit-left{display:flex;flex-direction:column;gap:2rem;}
- 
-.cit-big{
-  font-family:var(--font-display);
-  font-size:clamp(100px,12vw,180px);
-  line-height:0.85;
-  color:#0a0a0a;
-  letter-spacing:-0.01em;
-}
-.cit-big span{
-  display:block;
-  color:transparent;
-  -webkit-text-stroke:1.5px #0a0a0a;
-}
- 
-.cit-desc{
-  font-size:13px;color:rgba(10,10,10,0.45);
-  line-height:1.8;max-width:300px;
-}
- 
-.cit-network{
-  position:relative;
-  height:340px;
-}
- 
-.cit-node{
-  position:absolute;
-  border:1px solid rgba(10,10,10,0.15);
-  border-radius:2px;
-  padding:8px 14px;
-  font-size:10px;
-  font-family:var(--font-mono);
-  letter-spacing:1px;
-  color:rgba(10,10,10,0.6);
-  background:rgba(255,255,255,0.6);
-  backdrop-filter:blur(4px);
-  white-space:nowrap;
-  cursor:default;
-  transition:all .3s;
-}
-.cit-node:hover{background:#0a0a0a;color:#f5f0e8;border-color:#0a0a0a;}
-.cit-node.main{
-  background:#0a0a0a;color:#f5f0e8;
-  border-color:#0a0a0a;
-  font-size:11px;
-  padding:10px 18px;
-}
- 
-.cit-line{
-  position:absolute;
-  height:1px;
-  background:rgba(10,10,10,0.12);
-  transform-origin:left center;
-  pointer-events:none;
-}
- 
-/* ── PANEL 5: ANALYTICS ── */
-.p5{background:var(--bg);}
- 
-.analytics-scene{
-  position:relative;z-index:3;
-  width:90vw;max-width:1100px;
-}
- 
-.analytics-header{
-  display:flex;justify-content:space-between;
-  align-items:flex-end;
   margin-bottom:3rem;
 }
  
-.analytics-title{
-  font-family:var(--font-display);
-  font-size:clamp(60px,7vw,96px);
-  line-height:0.88;
-  color:var(--cream);
+.hero-actions{
+  display:flex;gap:1.25rem;align-items:center;
 }
-.analytics-title span{color:var(--gold);}
- 
-.analytics-sub{
-  font-family:var(--font-mono);font-size:10px;
-  letter-spacing:2px;color:var(--dim);
-  text-transform:uppercase;max-width:200px;
-  text-align:right;line-height:1.7;
+.btn-gold{
+  background:var(--gold);color:var(--bg);
+  font-family:var(--font-mono);font-size:.72rem;
+  letter-spacing:2px;text-transform:uppercase;
+  padding:14px 32px;text-decoration:none;
+  transition:background .2s,transform .2s;
+  display:inline-block;
 }
- 
-.bars{
-  display:flex;flex-direction:column;gap:0;
+.btn-gold:hover{background:var(--gold2);transform:translateY(-2px);}
+.btn-ghost{
+  font-family:var(--font-mono);font-size:.72rem;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--text2);text-decoration:none;
+  border-bottom:1px solid var(--text3);
+  padding-bottom:2px;
+  transition:color .2s,border-color .2s;
 }
+.btn-ghost:hover{color:var(--gold);border-color:var(--gold);}
  
-.bar-row-xl{
+/* Scroll indicator */
+.scroll-ind{
+  position:absolute;bottom:2.5rem;left:3rem;
+  display:flex;align-items:center;gap:12px;
+  font-family:var(--font-mono);font-size:.68rem;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--text3);z-index:2;
+}
+.scroll-ind-line{
+  width:40px;height:1px;background:var(--text3);
+  transform-origin:left;animation:lineGrow 2s ease infinite;
+}
+@keyframes lineGrow{0%{transform:scaleX(0);opacity:0}50%{transform:scaleX(1);opacity:1}100%{transform:scaleX(0);opacity:0}}
+ 
+/* ── STATS STRIP ── */
+.stats-strip{
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  padding:3rem;
   display:grid;
-  grid-template-columns:180px 1fr 60px;
-  gap:1.5rem;
-  align-items:center;
-  padding:1rem 0;
-  border-bottom:1px solid rgba(240,234,214,0.05);
+  grid-template-columns:repeat(4,1fr);
+  gap:0;
+}
+.strip-stat{
+  padding:1.5rem 2rem;
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;gap:.5rem;
+}
+.strip-stat:last-child{border-right:none;}
+.ss-num{
+  font-family:var(--font-display);
+  font-size:clamp(48px,5vw,72px);
+  color:var(--text);line-height:1;
+}
+.ss-num span{color:var(--gold);font-size:.6em;}
+.ss-label{
+  font-family:var(--font-mono);font-size:.68rem;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--text3);
+}
+.ss-desc{font-size:.82rem;color:var(--text2);margin-top:.25rem;}
+ 
+/* ── SECTION BASE ── */
+section{padding:8rem 3rem;}
+.section-inner{max-width:1200px;margin:0 auto;}
+ 
+.section-tag{
+  font-family:var(--font-mono);font-size:.68rem;
+  letter-spacing:3px;text-transform:uppercase;
+  color:var(--gold);margin-bottom:1.5rem;
+  display:flex;align-items:center;gap:10px;
+}
+.section-tag::after{content:'';flex:0 0 32px;height:1px;background:var(--gold);}
+ 
+/* ── FEATURES SECTION ── */
+.features-sec{background:var(--bg);}
+ 
+.features-header{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:4rem;align-items:end;
+  margin-bottom:5rem;
+}
+.features-title{
+  font-family:var(--font-display);
+  font-size:clamp(52px,6vw,88px);
+  line-height:.9;letter-spacing:.02em;
+  color:var(--text);
+}
+.features-title em{
+  font-family:var(--font-serif);
+  font-style:italic;color:var(--gold);
+}
+.features-desc{
+  font-size:.95rem;color:var(--text2);
+  line-height:1.8;max-width:380px;
+  align-self:end;
+}
+ 
+.features-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1px;
+  background:var(--border);
+}
+.feat-card{
+  background:var(--bg);
+  padding:2.5rem;
+  display:flex;flex-direction:column;gap:1rem;
+  transition:background .25s;
+  position:relative;overflow:hidden;
+}
+.feat-card::before{
+  content:'';
+  position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:var(--gold);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform .35s cubic-bezier(.25,1,.5,1);
+}
+.feat-card:hover{background:var(--bg2);}
+.feat-card:hover::before{transform:scaleX(1);}
+ 
+.feat-icon{
+  font-size:1.6rem;
+  width:48px;height:48px;
+  background:rgba(201,158,60,0.08);
+  border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  border-radius:4px;
+}
+.feat-name{
+  font-family:var(--font-display);
+  font-size:1.4rem;letter-spacing:.04em;
+  color:var(--text);
+}
+.feat-desc{
+  font-size:.85rem;color:var(--text2);
+  line-height:1.7;
+}
+.feat-tag{
+  margin-top:auto;
+  font-family:var(--font-mono);font-size:.65rem;
+  letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text3);
+}
+ 
+/* ── PAPERS SECTION ── */
+.papers-sec{
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+ 
+.papers-layout{
+  display:grid;
+  grid-template-columns:400px 1fr;
+  gap:6rem;
+  align-items:start;
+}
+ 
+.papers-sticky{
+  position:sticky;top:8rem;
+}
+.papers-big{
+  font-family:var(--font-display);
+  font-size:clamp(64px,7vw,108px);
+  line-height:.88;color:var(--text);
+  margin-bottom:1.5rem;
+}
+.papers-big span{
+  color:transparent;
+  -webkit-text-stroke:1px rgba(201,158,60,0.4);
+}
+.papers-note{
+  font-size:.875rem;color:var(--text2);
+  line-height:1.75;margin-bottom:2rem;
+}
+.papers-link{
+  font-family:var(--font-mono);font-size:.72rem;
+  letter-spacing:2px;text-transform:uppercase;
+  color:var(--gold);text-decoration:none;
+  display:inline-flex;align-items:center;gap:8px;
+  border-bottom:1px solid rgba(201,158,60,0.3);
+  padding-bottom:3px;
+  transition:border-color .2s;
+}
+.papers-link:hover{border-color:var(--gold);}
+ 
+.papers-list{display:flex;flex-direction:column;gap:0;}
+.paper-row{
+  padding:1.75rem 0;
+  border-bottom:1px solid var(--border);
+  display:grid;
+  grid-template-columns:56px 1fr 80px;
+  gap:1.25rem;align-items:center;
   cursor:default;
+  transition:padding-left .25s;
 }
-.bar-row-xl:hover .bar-xl-fill{opacity:1;}
+.paper-row:first-child{border-top:1px solid var(--border);}
+.paper-row:hover{padding-left:.75rem;}
+.pr-num{
+  font-family:var(--font-display);font-size:2.2rem;
+  color:rgba(201,158,60,0.2);line-height:1;
+}
+.pr-info{}
+.pr-title{
+  font-size:.95rem;font-weight:500;
+  color:var(--text);line-height:1.4;
+  margin-bottom:.3rem;
+}
+.pr-meta{
+  font-family:var(--font-mono);font-size:.68rem;
+  letter-spacing:1px;text-transform:uppercase;
+  color:var(--text3);
+}
+.pr-badge{
+  font-family:var(--font-display);
+  font-size:1.6rem;color:rgba(201,158,60,0.25);
+  text-align:right;line-height:1;
+}
+.pr-badge-label{
+  font-family:var(--font-mono);font-size:.62rem;
+  letter-spacing:1px;color:var(--text3);
+  text-transform:uppercase;display:block;
+}
  
-.bar-xl-label{
-  font-family:var(--font-mono);font-size:10px;
-  letter-spacing:1px;color:var(--dim);
-  text-transform:uppercase;text-align:right;
-}
+/* ── DB CONCEPTS SECTION ── */
+.db-sec{background:var(--bg);}
  
-.bar-xl-track{
-  height:2px;
-  background:rgba(240,234,214,0.06);
-  position:relative;
+.db-header{margin-bottom:4rem;}
+.db-title{
+  font-family:var(--font-display);
+  font-size:clamp(52px,6vw,88px);
+  line-height:.9;color:var(--text);
 }
-.bar-xl-fill{
-  height:100%;
-  background:var(--cream);
-  opacity:0.6;
-  transition:width 1.2s cubic-bezier(.25,1,.5,1),opacity .2s;
-  width:0;
+.db-title span{color:var(--gold);}
+ 
+.db-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1px;
+  background:var(--border);
 }
-.bar-xl-val{
-  font-family:var(--font-display);font-size:1.8rem;
-  color:var(--cream);text-align:right;
+.db-card{
+  background:var(--bg);
+  padding:2rem 1.75rem;
+  display:flex;flex-direction:column;
+  gap:.75rem;
+}
+.dbc-num{
+  font-family:var(--font-display);
+  font-size:3rem;color:rgba(201,158,60,0.15);
   line-height:1;
 }
- 
-/* ── PANEL 6: CTA ── */
-.p6{background:#111;}
- 
-.cta-scene{
-  position:relative;z-index:3;
-  text-align:center;
-  display:flex;flex-direction:column;
-  align-items:center;gap:2rem;
-}
- 
-.cta-overline{
-  font-family:var(--font-mono);font-size:10px;
-  letter-spacing:4px;color:var(--gold);
-  text-transform:uppercase;
-}
- 
-.cta-title{
+.dbc-name{
   font-family:var(--font-display);
-  font-size:clamp(64px,9vw,140px);
-  line-height:0.88;
-  color:var(--cream);
-  letter-spacing:0.02em;
+  font-size:1.2rem;letter-spacing:.04em;
+  color:var(--text);
+}
+.dbc-desc{
+  font-size:.82rem;color:var(--text2);
+  line-height:1.65;
+}
+.dbc-badge{
+  margin-top:auto;
+  font-family:var(--font-mono);font-size:.62rem;
+  letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--gold);padding-top:.75rem;
+  border-top:1px solid var(--border);
 }
  
-.cta-title strong{
+/* ── ANALYTICS SECTION ── */
+.analytics-sec{
+  background:var(--surface);
+  border-top:1px solid var(--border);
+}
+ 
+.analytics-layout{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:5rem;align-items:center;
+}
+ 
+.analytics-left{}
+.analytics-big{
+  font-family:var(--font-display);
+  font-size:clamp(64px,8vw,120px);
+  line-height:.88;color:var(--text);
+  margin-bottom:1.5rem;
+}
+.analytics-big em{
+  font-family:var(--font-serif);
+  font-style:italic;color:var(--gold);
+}
+.analytics-desc{
+  font-size:.9rem;color:var(--text2);
+  line-height:1.8;margin-bottom:2rem;
+  max-width:360px;
+}
+ 
+.chart-rows{display:flex;flex-direction:column;gap:1.25rem;}
+.chart-row{display:flex;flex-direction:column;gap:.5rem;}
+.cr-header{
+  display:flex;justify-content:space-between;
+  font-family:var(--font-mono);font-size:.68rem;
+  letter-spacing:1.5px;text-transform:uppercase;
+}
+.cr-label{color:var(--text2);}
+.cr-val{color:var(--gold);}
+.cr-track{
+  height:3px;background:rgba(201,158,60,0.08);
+  border-radius:2px;overflow:hidden;
+}
+.cr-fill{
+  height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));
+  border-radius:2px;
+  transition:width 1.2s cubic-bezier(.25,1,.5,1);
+  width:0;
+}
+ 
+/* ── TECH SECTION ── */
+.tech-sec{
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+ 
+.tech-title{
+  font-family:var(--font-display);
+  font-size:clamp(52px,6vw,88px);
+  line-height:.9;color:var(--text);
+  margin-bottom:3rem;
+}
+ 
+.tech-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:1.5rem;
+}
+.tech-item{
+  padding:2rem;
+  border:1px solid var(--border);
+  display:flex;flex-direction:column;gap:.75rem;
+  transition:border-color .25s,background .25s;
+}
+.tech-item:hover{
+  border-color:var(--border-lit);
+  background:var(--bg);
+}
+.ti-icon{font-size:1.8rem;}
+.ti-name{
+  font-family:var(--font-display);
+  font-size:1.5rem;letter-spacing:.04em;
+  color:var(--text);
+}
+.ti-role{
+  font-size:.82rem;color:var(--text2);
+  line-height:1.65;
+}
+.ti-tag{
+  font-family:var(--font-mono);font-size:.62rem;
+  letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text3);margin-top:auto;
+}
+ 
+/* ── CTA SECTION ── */
+.cta-sec{
+  background:var(--bg);
+  min-height:70vh;
+  display:flex;align-items:center;
+}
+.cta-inner{
+  max-width:1200px;margin:0 auto;
+  padding:0 3rem;width:100%;
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;gap:2.5rem;
+}
+.cta-label{
+  font-family:var(--font-mono);font-size:.72rem;
+  letter-spacing:3px;text-transform:uppercase;
+  color:var(--gold);
+}
+.cta-big{
+  font-family:var(--font-display);
+  font-size:clamp(72px,11vw,160px);
+  line-height:.85;color:var(--text);
+  letter-spacing:.02em;
+}
+.cta-big strong{
   color:transparent;
-  -webkit-text-stroke:1px var(--cream);
+  -webkit-text-stroke:1.5px var(--gold);
 }
- 
-.cta-links{
-  display:flex;gap:1.5rem;
-  flex-wrap:wrap;justify-content:center;
+.cta-buttons{
+  display:flex;gap:1.25rem;flex-wrap:wrap;
+  justify-content:center;
 }
- 
-.cta-link{
-  font-family:var(--font-mono);font-size:10px;
+.cta-btn{
+  font-family:var(--font-mono);font-size:.72rem;
   letter-spacing:2px;text-transform:uppercase;
-  color:var(--dim);text-decoration:none;
-  padding:14px 28px;
-  border:1px solid rgba(240,234,214,0.15);
+  padding:14px 32px;text-decoration:none;
+  border:1px solid var(--border);
+  color:var(--text2);
   transition:all .2s;
 }
-.cta-link:hover{
-  background:var(--cream);color:var(--bg);
-  border-color:var(--cream);
-}
-.cta-link.accent{
-  background:var(--gold);color:#0a0a0a;
-  border-color:var(--gold);
-}
-.cta-link.accent:hover{background:var(--cream);border-color:var(--cream);}
+.cta-btn:hover{border-color:var(--gold);color:var(--gold);}
+.cta-btn.primary{background:var(--gold);color:var(--bg);border-color:var(--gold);}
+.cta-btn.primary:hover{background:var(--gold2);}
  
-.cta-footer{
-  position:absolute;bottom:2rem;left:0;right:0;
-  display:flex;justify-content:space-between;
-  padding:0 3rem;z-index:3;
+/* ── FOOTER ── */
+footer{
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  padding:2rem 3rem;
+  display:flex;align-items:center;
+  justify-content:space-between;
 }
-.cta-footer span{
-  font-family:var(--font-mono);font-size:9px;
-  letter-spacing:2px;color:var(--dim);
-  text-transform:uppercase;
+.footer-brand{
+  font-family:var(--font-display);
+  font-size:1.2rem;letter-spacing:.1em;
+  color:var(--text2);
 }
- 
-/* ── NAV ── */
-nav{
-  position:fixed;top:0;left:0;right:0;
-  z-index:100;
-  display:flex;justify-content:space-between;align-items:center;
-  padding:1.5rem 3rem;
+.footer-brand span{color:var(--gold);}
+.footer-meta{
+  font-family:var(--font-mono);font-size:.65rem;
+  letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text3);
 }
- 
-.nav-logo{
-  font-family:var(--font-display);font-size:1.8rem;
-  letter-spacing:0.1em;color:var(--cream);
-  text-decoration:none;
-  mix-blend-mode:difference;
-}
- 
-.nav-dots{
-  display:flex;gap:8px;align-items:center;
-}
-.nav-dot{
-  width:6px;height:6px;border-radius:50%;
-  background:var(--dim);
-  cursor:pointer;
-  transition:background .3s,transform .3s;
-}
-.nav-dot.active{background:var(--cream);transform:scale(1.5);}
- 
-.nav-right{
-  display:flex;gap:2rem;align-items:center;
-}
-.nav-right a{
-  font-family:var(--font-mono);font-size:9px;
-  letter-spacing:2px;color:var(--dim);
-  text-decoration:none;text-transform:uppercase;
-  transition:color .2s;
-}
-.nav-right a:hover{color:var(--cream);}
  
 /* ── MARQUEE ── */
 .marquee-wrap{
-  position:fixed;bottom:0;left:0;right:0;
-  height:36px;overflow:hidden;
-  border-top:1px solid rgba(240,234,214,0.06);
-  z-index:50;
-  background:rgba(10,10,10,0.8);
-  backdrop-filter:blur(8px);
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  height:40px;overflow:hidden;
   display:flex;align-items:center;
 }
-.marquee-inner{
-  display:flex;gap:0;
-  animation:marquee 24s linear infinite;
+.marquee-track{
+  display:flex;animation:mq 24s linear infinite;
   white-space:nowrap;
 }
-.marquee-item{
-  font-family:var(--font-mono);font-size:9px;
-  letter-spacing:3px;color:var(--dim);
-  text-transform:uppercase;
-  padding:0 3rem;
+.mq-item{
+  font-family:var(--font-mono);font-size:.68rem;
+  letter-spacing:3px;text-transform:uppercase;
+  color:var(--text3);padding:0 2.5rem;
 }
-.marquee-item span{color:var(--gold);margin-right:0.5rem;}
-@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.mq-item span{color:var(--gold);}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
  
-/* ── PANEL PROGRESS LINE ── */
-.progress-line{
-  position:fixed;bottom:36px;left:0;height:1px;
-  background:var(--gold);z-index:80;
-  transition:width .9s cubic-bezier(.16,1,.3,1);
+/* ── SCROLL REVEAL ── */
+.reveal{
+  opacity:0;transform:translateY(32px);
+  transition:opacity .7s cubic-bezier(.25,1,.5,1),transform .7s cubic-bezier(.25,1,.5,1);
 }
+.reveal.in{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:.1s}
+.reveal-delay-2{transition-delay:.2s}
+.reveal-delay-3{transition-delay:.3s}
+.reveal-delay-4{transition-delay:.4s}
+.reveal-delay-5{transition-delay:.5s}
 </style>
 </head>
 <body>
  
-<div id="cursor"></div>
+<div id="cur"></div>
+<div id="cur-trail"></div>
  
 <!-- NAV -->
-<nav>
-  <a href="#" class="nav-logo">ACADEX</a>
-  <div class="nav-dots" id="nav-dots">
-    <div class="nav-dot active" data-panel="0"></div>
-    <div class="nav-dot" data-panel="1"></div>
-    <div class="nav-dot" data-panel="2"></div>
-    <div class="nav-dot" data-panel="3"></div>
-    <div class="nav-dot" data-panel="4"></div>
-    <div class="nav-dot" data-panel="5"></div>
-    <div class="nav-dot" data-panel="6"></div>
-  </div>
-  <div class="nav-right">
-    <a href="papers.php">Papers</a>
-    <a href="authors.php">Authors</a>
-    <a href="analytics.php">Analytics</a>
-    <a href="add_paper.php" style="color:var(--gold);">+ Add</a>
-  </div>
+<nav class="nav" id="nav">
+  <a href="index.php" class="nav-logo">ACAD<span>EX</span></a>
+  <ul class="nav-links">
+    <li><a href="papers.php">Papers</a></li>
+    <li><a href="authors.php">Authors</a></li>
+    <li><a href="citations.php">Citations</a></li>
+    <li><a href="analytics.php">Analytics</a></li>
+  </ul>
+  <a href="dashboard.php" class="nav-cta">Enter Dashboard</a>
 </nav>
  
-<!-- HORIZONTAL TRACK -->
-<div id="track">
- 
-  <!-- ── PANEL 0: HERO ── -->
-  <div class="panel p0">
-    <div class="hero-bg-text">KNOWLEDGE</div>
-    <div class="hero-content">
-      <div class="hero-eyebrow">Academic Publication System · DBMS Project</div>
-      <h1 class="hero-title">ACAD<span>EX</span></h1>
-      <p class="hero-sub">A research publication management platform — tracking papers, authors, citations, and knowledge across institutions worldwide.</p>
-      <div class="hero-actions">
-        <a href="dashboard.php" class="btn-primary">Enter Dashboard</a>
-        <a href="papers.php" class="btn-ghost">Browse Papers →</a>
-      </div>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-text">KNOWLEDGE</div>
+  <div class="hero-inner">
+    <div class="hero-tag">Academic Publication System · DBMS Project</div>
+    <h1 class="hero-title">THE<br>RESEARCH<br><em>Archive</em></h1>
+    <p class="hero-desc">A complete academic publication management platform — indexing papers, tracking authors, mapping citation networks, and surfacing research insights.</p>
+    <div class="hero-actions">
+      <a href="dashboard.php" class="btn-gold">Enter Dashboard</a>
+      <a href="papers.php" class="btn-ghost">Browse Papers →</a>
     </div>
-    <div class="scroll-hint">
-      <span>Scroll to explore</span>
-      <div class="scroll-line"></div>
-    </div>
-    <div class="panel-num">01 / 07</div>
   </div>
- 
-  <!-- ── PANEL 1: STATS ── -->
-  <div class="panel p1">
-    <div class="p1-header">DATABASE</div>
-    <div class="stats-scene">
-      <div class="stat-block" data-n="1">
-        <div class="stat-num" id="s-papers">05<sup>+</sup></div>
-        <div class="stat-label">Research Papers</div>
-        <div class="stat-desc">Indexed with full metadata, abstracts, DOIs, and venue information.</div>
-      </div>
-      <div class="stat-block" data-n="2">
-        <div class="stat-num" id="s-authors">05<sup>+</sup></div>
-        <div class="stat-label">Registered Authors</div>
-        <div class="stat-desc">Researchers linked to institutions with h-index tracking.</div>
-      </div>
-      <div class="stat-block" data-n="3">
-        <div class="stat-num" id="s-citations">05<sup>+</sup></div>
-        <div class="stat-label">Citations Tracked</div>
-        <div class="stat-desc">Full citation network with context and cross-references.</div>
-      </div>
-      <div class="stat-block" data-n="4">
-        <div class="stat-num" id="s-inst">05<sup>+</sup></div>
-        <div class="stat-label">Institutions</div>
-        <div class="stat-desc">Universities and research centres from five countries.</div>
-      </div>
-    </div>
-    <div class="panel-num">02 / 07</div>
+  <div class="scroll-ind">
+    <div class="scroll-ind-line"></div>
+    
   </div>
+</section>
  
-  <!-- ── PANEL 2: PAPERS ── -->
-  <div class="panel p2">
-    <div class="papers-scene">
-      <div class="papers-left">
-        <h2>RE<br>SEARCH<br><em>PAPERS</em></h2>
-        <p>Full-text searchable archive of academic papers with FULLTEXT MySQL indexing, filter by year, status, and venue type.</p>
-        <a href="papers.php">Browse all papers →</a>
-      </div>
-      <div class="paper-list-editorial">
-        <div class="paper-item">
-          <div class="pi-num">01</div>
-          <div>
-            <div class="pi-title">Attention Is All You Need</div>
-            <div class="pi-meta">NeurIPS · 2017 · Published</div>
-          </div>
-          <div class="pi-cite">03<span class="pi-cite-label">cites</span></div>
-        </div>
-        <div class="paper-item">
-          <div class="pi-num">02</div>
-          <div>
-            <div class="pi-title">BERT: Pre-training of Deep Bidirectional Transformers</div>
-            <div class="pi-meta">NeurIPS · 2019 · Published</div>
-          </div>
-          <div class="pi-cite">02<span class="pi-cite-label">cites</span></div>
-        </div>
-        <div class="paper-item">
-          <div class="pi-num">03</div>
-          <div>
-            <div class="pi-title">Deep Residual Learning for Image Recognition</div>
-            <div class="pi-meta">NeurIPS · 2016 · Published</div>
-          </div>
-          <div class="pi-cite">01<span class="pi-cite-label">cites</span></div>
-        </div>
-        <div class="paper-item">
-          <div class="pi-num">04</div>
-          <div>
-            <div class="pi-title">ImageNet Large Scale Visual Recognition Challenge</div>
-            <div class="pi-meta">IEEE Trans. AI · 2015 · Published</div>
-          </div>
-          <div class="pi-cite">01<span class="pi-cite-label">cites</span></div>
-        </div>
-        <div class="paper-item">
-          <div class="pi-num">05</div>
-          <div>
-            <div class="pi-title">Scalable Distributed Database Architectures</div>
-            <div class="pi-meta">ACM SIGMOD · 2022 · Published</div>
-          </div>
-          <div class="pi-cite">00<span class="pi-cite-label">cites</span></div>
-        </div>
-      </div>
-    </div>
-    <div class="panel-num" style="color:rgba(10,10,10,0.3);">03 / 07</div>
+<!-- STATS STRIP -->
+<div class="stats-strip reveal">
+  <div class="strip-stat">
+    <div class="ss-num">05<span>+</span></div>
+    <div class="ss-label">Research Papers</div>
+    <div class="ss-desc">Indexed with metadata, DOIs, keywords and abstracts</div>
   </div>
- 
-  <!-- ── PANEL 3: AUTHORS ── -->
-  <div class="panel p3">
-    <div class="authors-scene">
-      <div class="authors-title">RE<br>SEARCH<br><span>ERS</span></div>
-      <div class="author-grid">
-        <div class="author-card">
-          <div class="ac-initials">YL</div>
-          <div class="ac-name">Yann LeCun</div>
-          <div class="ac-inst">MIT</div>
-          <div class="ac-area">Deep Learning, Computer Vision</div>
-          <div class="ac-stats">
-            <div class="ac-stat"><span>175</span><label>h-index</label></div>
-            <div class="ac-stat"><span>02</span><label>papers</label></div>
-          </div>
-        </div>
-        <div class="author-card">
-          <div class="ac-initials">FL</div>
-          <div class="ac-name">Fei-Fei Li</div>
-          <div class="ac-inst">Stanford</div>
-          <div class="ac-area">Computer Vision, AI</div>
-          <div class="ac-stats">
-            <div class="ac-stat"><span>90</span><label>h-index</label></div>
-            <div class="ac-stat"><span>02</span><label>papers</label></div>
-          </div>
-        </div>
-        <div class="author-card">
-          <div class="ac-initials">PS</div>
-          <div class="ac-name">Priya Sharma</div>
-          <div class="ac-inst">IIT Bombay</div>
-          <div class="ac-area">Natural Language Processing</div>
-          <div class="ac-stats">
-            <div class="ac-stat"><span>12</span><label>h-index</label></div>
-            <div class="ac-stat"><span>02</span><label>papers</label></div>
-          </div>
-        </div>
-        <div class="author-card">
-          <div class="ac-initials">GH</div>
-          <div class="ac-name">Geoffrey Hinton</div>
-          <div class="ac-inst">Cambridge</div>
-          <div class="ac-area">Neural Networks</div>
-          <div class="ac-stats">
-            <div class="ac-stat"><span>150</span><label>h-index</label></div>
-            <div class="ac-stat"><span>02</span><label>papers</label></div>
-          </div>
-        </div>
-        <div class="author-card">
-          <div class="ac-initials">AK</div>
-          <div class="ac-name">Aditya Kumar</div>
-          <div class="ac-inst">ETH Zurich</div>
-          <div class="ac-area">Distributed Systems</div>
-          <div class="ac-stats">
-            <div class="ac-stat"><span>18</span><label>h-index</label></div>
-            <div class="ac-stat"><span>01</span><label>papers</label></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="panel-num">04 / 07</div>
+  <div class="strip-stat">
+    <div class="ss-num">05<span>+</span></div>
+    <div class="ss-label">Authors</div>
+    <div class="ss-desc">Researchers with h-index and institutional links</div>
   </div>
- 
-  <!-- ── PANEL 4: CITATIONS ── -->
-  <div class="panel p4">
-    <div class="citations-scene">
-      <div class="cit-left">
-        <div class="cit-big">CIT<span>ATION</span></div>
-        <div class="cit-desc">A full citation graph linking papers across disciplines, years, and institutions. Self-citation prevention enforced at the database trigger level.</div>
-        <a href="citations.php" style="display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#0a0a0a;text-decoration:none;border-bottom:1px solid #0a0a0a;padding-bottom:2px;">View Citation Network →</a>
-      </div>
-      <div class="cit-network" id="cit-net">
-        <!-- Positioned by JS -->
-        <div class="cit-node main" style="top:130px;left:150px;">Attention Is All You Need</div>
-        <div class="cit-node" style="top:30px;left:10px;">BERT</div>
-        <div class="cit-node" style="top:50px;right:20px;">ResNet</div>
-        <div class="cit-node" style="bottom:80px;left:0px;">Distrib. DB</div>
-        <div class="cit-node" style="bottom:30px;right:40px;">ImageNet</div>
-        <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;">
-          <line x1="250" y1="148" x2="100" y2="55" stroke="rgba(10,10,10,0.1)" stroke-width="1"/>
-          <line x1="310" y1="148" x2="400" y2="65" stroke="rgba(10,10,10,0.1)" stroke-width="1"/>
-          <line x1="230" y1="170" x2="80" y2="270" stroke="rgba(10,10,10,0.1)" stroke-width="1"/>
-          <line x1="290" y1="170" x2="400" y2="305" stroke="rgba(10,10,10,0.1)" stroke-width="1"/>
-        </svg>
-      </div>
-    </div>
-    <div class="panel-num" style="color:rgba(10,10,10,0.2);">05 / 07</div>
+  <div class="strip-stat">
+    <div class="ss-num">05<span>+</span></div>
+    <div class="ss-label">Citations Tracked</div>
+    <div class="ss-desc">Full citation graph with self-reference prevention</div>
   </div>
- 
-  <!-- ── PANEL 5: ANALYTICS ── -->
-  <div class="panel p5">
-    <div class="analytics-scene">
-      <div class="analytics-header">
-        <div class="analytics-title">DATA<br><span>INSIGHTS</span></div>
-        <div class="analytics-sub">Live analytics powered by MySQL views, joins, and aggregate queries.</div>
-      </div>
-      <div class="bars" id="bars">
-        <div class="bar-row-xl">
-          <div class="bar-xl-label">NeurIPS</div>
-          <div class="bar-xl-track"><div class="bar-xl-fill" data-w="100%"></div></div>
-          <div class="bar-xl-val">03</div>
-        </div>
-        <div class="bar-row-xl">
-          <div class="bar-xl-label">IEEE Trans. AI</div>
-          <div class="bar-xl-track"><div class="bar-xl-fill" data-w="33%"></div></div>
-          <div class="bar-xl-val">01</div>
-        </div>
-        <div class="bar-row-xl">
-          <div class="bar-xl-label">ACM SIGMOD</div>
-          <div class="bar-xl-track"><div class="bar-xl-fill" data-w="33%"></div></div>
-          <div class="bar-xl-val">01</div>
-        </div>
-        <div class="bar-row-xl">
-          <div class="bar-xl-label">Nature</div>
-          <div class="bar-xl-track"><div class="bar-xl-fill" data-w="0%"></div></div>
-          <div class="bar-xl-val">00</div>
-        </div>
-        <div class="bar-row-xl">
-          <div class="bar-xl-label">JMLR</div>
-          <div class="bar-xl-track"><div class="bar-xl-fill" data-w="0%"></div></div>
-          <div class="bar-xl-val">00</div>
-        </div>
-      </div>
-    </div>
-    <div class="panel-num">06 / 07</div>
-  </div>
- 
-  <!-- ── PANEL 6: CTA ── -->
-  <div class="panel p6">
-    <div class="cta-scene">
-      <div class="cta-overline">Ready to explore?</div>
-      <div class="cta-title">START<br><strong>YOUR</strong><br>RESEARCH</div>
-      <div class="cta-links">
-        <a href="dashboard.php" class="cta-link accent">Dashboard</a>
-        <a href="papers.php" class="cta-link">Browse Papers</a>
-        <a href="add_paper.php" class="cta-link">Add Paper</a>
-        <a href="analytics.php" class="cta-link">Analytics</a>
-      </div>
-    </div>
-    <div class="cta-footer">
-      <span>Acadex · DBMS College Project</span>
-      <span>MySQL · PHP · HTML/CSS</span>
-    </div>
-    <div class="panel-num">07 / 07</div>
-  </div>
- 
-</div><!-- /track -->
- 
-<!-- MARQUEE -->
-<div class="marquee-wrap">
-  <div class="marquee-inner">
-    <span class="marquee-item"><span>⬡</span>ACADEX</span>
-    <span class="marquee-item"><span>◈</span>RESEARCH PAPERS</span>
-    <span class="marquee-item"><span>◈</span>CITATION NETWORK</span>
-    <span class="marquee-item"><span>◈</span>AUTHOR INDEX</span>
-    <span class="marquee-item"><span>◈</span>VENUE ANALYTICS</span>
-    <span class="marquee-item"><span>◈</span>MYSQL + PHP</span>
-    <span class="marquee-item"><span>◈</span>DBMS PROJECT 2025</span>
-    <span class="marquee-item"><span>⬡</span>ACADEX</span>
-    <span class="marquee-item"><span>◈</span>RESEARCH PAPERS</span>
-    <span class="marquee-item"><span>◈</span>CITATION NETWORK</span>
-    <span class="marquee-item"><span>◈</span>AUTHOR INDEX</span>
-    <span class="marquee-item"><span>◈</span>VENUE ANALYTICS</span>
-    <span class="marquee-item"><span>◈</span>MYSQL + PHP</span>
-    <span class="marquee-item"><span>◈</span>DBMS PROJECT 2025</span>
+  <div class="strip-stat">
+    <div class="ss-num">05<span>+</span></div>
+    <div class="ss-label">Institutions</div>
+    <div class="ss-desc">Universities and research centres worldwide</div>
   </div>
 </div>
  
-<!-- PROGRESS LINE -->
-<div class="progress-line" id="progress"></div>
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span class="mq-item"><span>⬡</span> ACADEX</span>
+    <span class="mq-item"><span>◈</span> RESEARCH PAPERS</span>
+    <span class="mq-item"><span>◈</span> CITATION NETWORK</span>
+    <span class="mq-item"><span>◈</span> AUTHOR INDEX</span>
+    <span class="mq-item"><span>◈</span> VENUE ANALYTICS</span>
+    <span class="mq-item"><span>◈</span> FULLTEXT SEARCH</span>
+    <span class="mq-item"><span>◈</span> MYSQL + PHP</span>
+    <span class="mq-item"><span>◈</span> DBMS PROJECT 2025</span>
+    <span class="mq-item"><span>⬡</span> ACADEX</span>
+    <span class="mq-item"><span>◈</span> RESEARCH PAPERS</span>
+    <span class="mq-item"><span>◈</span> CITATION NETWORK</span>
+    <span class="mq-item"><span>◈</span> AUTHOR INDEX</span>
+    <span class="mq-item"><span>◈</span> VENUE ANALYTICS</span>
+    <span class="mq-item"><span>◈</span> FULLTEXT SEARCH</span>
+    <span class="mq-item"><span>◈</span> MYSQL + PHP</span>
+    <span class="mq-item"><span>◈</span> DBMS PROJECT 2025</span>
+  </div>
+</div>
+ 
+<!-- FEATURES -->
+<section class="features-sec">
+  <div class="section-inner">
+    <div class="features-header reveal">
+      <div>
+        <div class="section-tag">Core Features</div>
+        <div class="features-title">BUILT FOR<br><em>Research</em><br>MANAGEMENT</div>
+      </div>
+      <p class="features-desc">Every feature is backed by a real SQL query — joins, aggregates, fulltext search, triggers, and stored procedures — all running live from a normalized MySQL database.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon">🔍</div>
+        <div class="feat-name">FULLTEXT SEARCH</div>
+        <div class="feat-desc">MySQL FULLTEXT index on title, abstract, and keywords. Relevance-ranked results — not a basic LIKE query.</div>
+        <div class="feat-tag">SQL · MATCH AGAINST</div>
+      </div>
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon">🔗</div>
+        <div class="feat-name">CITATION NETWORK</div>
+        <div class="feat-desc">Track which papers reference which. Self-citation blocked by a BEFORE INSERT trigger at the database level.</div>
+        <div class="feat-tag">TRIGGER · CASCADE DELETE</div>
+      </div>
+      <div class="feat-card reveal reveal-delay-3">
+        <div class="feat-icon">⚡</div>
+        <div class="feat-name">H-INDEX ENGINE</div>
+        <div class="feat-desc">One-click h-index computation via a MySQL stored procedure. Real academic impact metric, calculated inside the DB.</div>
+        <div class="feat-tag">STORED PROCEDURE</div>
+      </div>
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon">📊</div>
+        <div class="feat-name">LIVE ANALYTICS</div>
+        <div class="feat-desc">Venue stats, citation networks, author rankings — powered by complex JOIN queries and aggregate functions.</div>
+        <div class="feat-tag">GROUP BY · COUNT · SUM</div>
+      </div>
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon">🏛️</div>
+        <div class="feat-name">DATABASE VIEWS</div>
+        <div class="feat-desc">paper_details and author_stats views simplify complex queries into reusable virtual tables used across all pages.</div>
+        <div class="feat-tag">CREATE VIEW</div>
+      </div>
+      <div class="feat-card reveal reveal-delay-3">
+        <div class="feat-icon">🔒</div>
+        <div class="feat-name">TRANSACTIONS</div>
+        <div class="feat-desc">Adding a paper with authors runs as a single atomic transaction. Any failure triggers a full ROLLBACK.</div>
+        <div class="feat-tag">BEGIN · COMMIT · ROLLBACK</div>
+      </div>
+    </div>
+  </div>
+</section>
+ 
+<!-- PAPERS -->
+<section class="papers-sec">
+  <div class="section-inner">
+    <div class="papers-layout">
+      <div class="papers-sticky reveal">
+        <div class="section-tag">Paper Archive</div>
+        <div class="papers-big">RE<br>SEARCH<br><span>PAPERS</span></div>
+        <p class="papers-note">Five landmark research papers pre-loaded — from the Transformer architecture to Chandrayaan-style distributed systems. Search, filter, add your own.</p>
+        <a href="papers.php" class="papers-link">Browse all papers →</a>
+      </div>
+      <div class="papers-list reveal reveal-delay-2">
+        <div class="paper-row">
+          <div class="pr-num">01</div>
+          <div class="pr-info">
+            <div class="pr-title">Attention Is All You Need</div>
+            <div class="pr-meta">NeurIPS · 2017 · Published</div>
+          </div>
+          <div class="pr-badge">03<span class="pr-badge-label">cites</span></div>
+        </div>
+        <div class="paper-row">
+          <div class="pr-num">02</div>
+          <div class="pr-info">
+            <div class="pr-title">BERT: Pre-training of Deep Bidirectional Transformers</div>
+            <div class="pr-meta">NeurIPS · 2019 · Published</div>
+          </div>
+          <div class="pr-badge">02<span class="pr-badge-label">cites</span></div>
+        </div>
+        <div class="paper-row">
+          <div class="pr-num">03</div>
+          <div class="pr-info">
+            <div class="pr-title">Deep Residual Learning for Image Recognition</div>
+            <div class="pr-meta">NeurIPS · 2016 · Published</div>
+          </div>
+          <div class="pr-badge">01<span class="pr-badge-label">cites</span></div>
+        </div>
+        <div class="paper-row">
+          <div class="pr-num">04</div>
+          <div class="pr-info">
+            <div class="pr-title">ImageNet Large Scale Visual Recognition Challenge</div>
+            <div class="pr-meta">IEEE Trans. AI · 2015 · Published</div>
+          </div>
+          <div class="pr-badge">01<span class="pr-badge-label">cites</span></div>
+        </div>
+        <div class="paper-row">
+          <div class="pr-num">05</div>
+          <div class="pr-info">
+            <div class="pr-title">Scalable Distributed Database Architectures</div>
+            <div class="pr-meta">ACM SIGMOD · 2022 · Published</div>
+          </div>
+          <div class="pr-badge">00<span class="pr-badge-label">cites</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+ 
+<!-- DB CONCEPTS -->
+<section class="db-sec">
+  <div class="section-inner">
+    <div class="db-header reveal">
+      <div class="section-tag">DBMS Concepts</div>
+      <div class="db-title">8 CONCEPTS<br><span>ONE SYSTEM</span></div>
+    </div>
+    <div class="db-grid">
+      <div class="db-card reveal reveal-delay-1">
+        <div class="dbc-num">01</div>
+        <div class="dbc-name">NORMALIZATION</div>
+        <div class="dbc-desc">Schema normalized to BCNF across 6 tables — no redundancy, no partial or transitive dependencies.</div>
+        <div class="dbc-badge">1NF → 2NF → 3NF → BCNF</div>
+      </div>
+      <div class="db-card reveal reveal-delay-2">
+        <div class="dbc-num">02</div>
+        <div class="dbc-name">FOREIGN KEYS</div>
+        <div class="dbc-desc">Every relationship enforced by FK constraints with CASCADE DELETE and SET NULL behaviors.</div>
+        <div class="dbc-badge">Referential Integrity</div>
+      </div>
+      <div class="db-card reveal reveal-delay-3">
+        <div class="dbc-num">03</div>
+        <div class="dbc-name">TRIGGER</div>
+        <div class="dbc-desc">BEFORE INSERT trigger on citations table prevents any paper from referencing itself — database-level enforcement.</div>
+        <div class="dbc-badge">before_citation_insert</div>
+      </div>
+      <div class="db-card reveal reveal-delay-4">
+        <div class="dbc-num">04</div>
+        <div class="dbc-name">STORED PROC</div>
+        <div class="dbc-desc">update_h_index() procedure computes author h-index entirely inside MySQL — no application logic needed.</div>
+        <div class="dbc-badge">CALL update_h_index(id)</div>
+      </div>
+      <div class="db-card reveal reveal-delay-1">
+        <div class="dbc-num">05</div>
+        <div class="dbc-name">VIEWS</div>
+        <div class="dbc-desc">paper_details and author_stats views encapsulate complex JOINs for reuse across all PHP pages.</div>
+        <div class="dbc-badge">CREATE VIEW</div>
+      </div>
+      <div class="db-card reveal reveal-delay-2">
+        <div class="dbc-num">06</div>
+        <div class="dbc-name">TRANSACTIONS</div>
+        <div class="dbc-desc">Multi-table inserts wrapped in BEGIN/COMMIT with ROLLBACK on failure — fully atomic operations.</div>
+        <div class="dbc-badge">ACID Compliance</div>
+      </div>
+      <div class="db-card reveal reveal-delay-3">
+        <div class="dbc-num">07</div>
+        <div class="dbc-name">FULLTEXT INDEX</div>
+        <div class="dbc-desc">MySQL FULLTEXT index enables relevance-ranked boolean-mode search across title, abstract and keywords.</div>
+        <div class="dbc-badge">MATCH() AGAINST()</div>
+      </div>
+      <div class="db-card reveal reveal-delay-4">
+        <div class="dbc-num">08</div>
+        <div class="dbc-name">M-TO-M JOIN</div>
+        <div class="dbc-desc">paper_authors junction table resolves the many-to-many relationship between papers and authors with role metadata.</div>
+        <div class="dbc-badge">Junction Table Pattern</div>
+      </div>
+    </div>
+  </div>
+</section>
+ 
+<!-- ANALYTICS -->
+<section class="analytics-sec">
+  <div class="section-inner">
+    <div class="analytics-layout">
+      <div class="analytics-left reveal">
+        <div class="section-tag">Analytics Module</div>
+        <div class="analytics-big">DATA<br><em>Insights</em></div>
+        <p class="analytics-desc">Live charts and tables powered by aggregate SQL queries — venue stats, citation networks, author rankings, and impact factor analysis.</p>
+        <a href="analytics.php" class="btn-gold" style="margin-top:1rem;display:inline-block;">View Analytics →</a>
+      </div>
+      <div class="chart-rows reveal reveal-delay-2" id="chart-rows">
+        <div class="chart-row">
+          <div class="cr-header"><span class="cr-label">NeurIPS (Conference)</span><span class="cr-val">3 papers</span></div>
+          <div class="cr-track"><div class="cr-fill" data-w="100%"></div></div>
+        </div>
+        <div class="chart-row">
+          <div class="cr-header"><span class="cr-label">IEEE Trans. AI (Journal)</span><span class="cr-val">1 paper</span></div>
+          <div class="cr-track"><div class="cr-fill" data-w="33%"></div></div>
+        </div>
+        <div class="chart-row">
+          <div class="cr-header"><span class="cr-label">ACM SIGMOD (Conference)</span><span class="cr-val">1 paper</span></div>
+          <div class="cr-track"><div class="cr-fill" data-w="33%"></div></div>
+        </div>
+        <div class="chart-row">
+          <div class="cr-header"><span class="cr-label">Attention Is All You Need</span><span class="cr-val">3 cites</span></div>
+          <div class="cr-track"><div class="cr-fill" data-w="100%"></div></div>
+        </div>
+        <div class="chart-row">
+          <div class="cr-header"><span class="cr-label">BERT</span><span class="cr-val">2 cites</span></div>
+          <div class="cr-track"><div class="cr-fill" data-w="66%"></div></div>
+        </div>
+        <div class="chart-row">
+          <div class="cr-header"><span class="cr-label">Deep Residual Learning</span><span class="cr-val">1 cite</span></div>
+          <div class="cr-track"><div class="cr-fill" data-w="33%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+ 
+<!-- TECH STACK -->
+<section class="tech-sec">
+  <div class="section-inner">
+    <div class="section-tag reveal">Technology Stack</div>
+    <div class="tech-title reveal">BUILT WITH</div>
+    <div class="tech-grid">
+      <div class="tech-item reveal reveal-delay-1">
+        <div class="ti-icon">🗄️</div>
+        <div class="ti-name">MySQL 8</div>
+        <div class="ti-role">Core database — 6 normalized tables, views, trigger, stored procedure, FULLTEXT index, transactions.</div>
+        <div class="ti-tag">Database Layer</div>
+      </div>
+      <div class="tech-item reveal reveal-delay-2">
+        <div class="ti-icon">🐘</div>
+        <div class="ti-name">PHP 8</div>
+        <div class="ti-role">Server-side backend — DB connectivity, CRUD operations, prepared statements, session handling.</div>
+        <div class="ti-tag">Backend Layer</div>
+      </div>
+      <div class="tech-item reveal reveal-delay-3">
+        <div class="ti-icon">🎨</div>
+        <div class="ti-name">HTML / CSS / JS</div>
+        <div class="ti-role">Frontend — dark charcoal theme, scroll animations, animated charts, custom cursor, responsive layout.</div>
+        <div class="ti-tag">Frontend Layer</div>
+      </div>
+      <div class="tech-item reveal reveal-delay-1">
+        <div class="ti-icon">⚙️</div>
+        <div class="ti-name">XAMPP</div>
+        <div class="ti-role">Local Apache + MySQL server stack for development and testing on Windows.</div>
+        <div class="ti-tag">Dev Environment</div>
+      </div>
+      <div class="tech-item reveal reveal-delay-2">
+        <div class="ti-icon">🌐</div>
+        <div class="ti-name">ngrok</div>
+        <div class="ti-role">Secure public URL tunnel — makes localhost accessible anywhere without paid hosting.</div>
+        <div class="ti-tag">Deployment</div>
+      </div>
+      <div class="tech-item reveal reveal-delay-3">
+        <div class="ti-icon">🐙</div>
+        <div class="ti-name">Git / GitHub</div>
+        <div class="ti-role">Version control and source code hosting — professional development workflow.</div>
+        <div class="ti-tag">Version Control</div>
+      </div>
+    </div>
+  </div>
+</section>
+ 
+<!-- CTA -->
+<section class="cta-sec">
+  <div class="cta-inner">
+    <div class="cta-label reveal">Ready to explore?</div>
+    <div class="cta-big reveal reveal-delay-1">START<br><strong>YOUR</strong><br>RESEARCH</div>
+    <div class="cta-buttons reveal reveal-delay-2">
+      <a href="dashboard.php" class="cta-btn primary">Enter Dashboard</a>
+      <a href="papers.php" class="cta-btn">Browse Papers</a>
+      <a href="add_paper.php" class="cta-btn">Add Paper</a>
+      <a href="analytics.php" class="cta-btn">Analytics</a>
+    </div>
+  </div>
+</section>
+ 
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">ACAD<span>EX</span></div>
+  <div class="footer-meta">Academic Publication Management · DBMS Project · MySQL + PHP</div>
+</footer>
  
 <script>
-const PANELS = 7;
-let current = 0;
-let animating = false;
- 
-const track = document.getElementById('track');
-const dots   = document.querySelectorAll('.nav-dot');
-const progress = document.getElementById('progress');
-const cursor = document.getElementById('cursor');
- 
-function goTo(n){
-  if(n < 0 || n >= PANELS || n === current) return;
-  animating = true;
-  current = n;
-  track.style.transform = `translateX(-${n * 100}vw)`;
-  dots.forEach((d,i) => d.classList.toggle('active', i === n));
-  progress.style.width = ((n / (PANELS-1)) * 100) + '%';
- 
-  // Animate bars when reaching analytics panel
-  if(n === 5){
-    setTimeout(()=>{
-      document.querySelectorAll('.bar-xl-fill').forEach(b=>{
-        b.style.width = b.dataset.w;
-      });
-    },400);
-  }
- 
-  setTimeout(()=> animating = false, 1000);
-}
- 
-// Wheel
-let wheelTimeout;
-window.addEventListener('wheel', e=>{
-  e.preventDefault();
-  clearTimeout(wheelTimeout);
-  wheelTimeout = setTimeout(()=>{
-    if(animating) return;
-    if(e.deltaY > 0 || e.deltaX > 0) goTo(current + 1);
-    else goTo(current - 1);
-  }, 40);
-}, {passive:false});
- 
-// Keys
-window.addEventListener('keydown', e=>{
-  if(e.key==='ArrowRight'||e.key==='ArrowDown') goTo(current+1);
-  if(e.key==='ArrowLeft'||e.key==='ArrowUp')   goTo(current-1);
+// ── Cursor
+const cur = document.getElementById('cur');
+const trail = document.getElementById('cur-trail');
+let mx=0,my=0;
+document.addEventListener('mousemove', e=>{
+  mx=e.clientX; my=e.clientY;
+  cur.style.left=mx+'px'; cur.style.top=my+'px';
+  setTimeout(()=>{ trail.style.left=mx+'px'; trail.style.top=my+'px'; },80);
+});
+document.querySelectorAll('a,button,.feat-card,.tech-item,.paper-row,.db-card,.strip-stat').forEach(el=>{
+  el.addEventListener('mouseenter',()=>cur.classList.add('grow'));
+  el.addEventListener('mouseleave',()=>cur.classList.remove('grow'));
 });
  
-// Nav dots
-dots.forEach(d=>{
-  d.addEventListener('click',()=> goTo(+d.dataset.panel));
+// ── Nav scroll
+const nav = document.getElementById('nav');
+window.addEventListener('scroll',()=>{
+  nav.classList.toggle('scrolled', window.scrollY > 60);
 });
  
-// Touch
-let tx=0;
-window.addEventListener('touchstart',e=>{ tx=e.touches[0].clientX; });
-window.addEventListener('touchend',e=>{
-  const dx = e.changedTouches[0].clientX - tx;
-  if(Math.abs(dx)>50) goTo(current + (dx<0?1:-1));
-});
+// ── Scroll reveal
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){ e.target.classList.add('in'); obs.unobserve(e.target); }
+  });
+},{threshold:0.12});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
  
-// Cursor
-document.addEventListener('mousemove',e=>{
-  cursor.style.left = e.clientX+'px';
-  cursor.style.top  = e.clientY+'px';
-});
-document.querySelectorAll('a,button,.nav-dot,.stat-block,.author-card,.paper-item,.bar-row-xl').forEach(el=>{
-  el.addEventListener('mouseenter',()=> cursor.classList.add('big'));
-  el.addEventListener('mouseleave',()=> cursor.classList.remove('big'));
-});
- 
-// Init progress
-progress.style.width = '0%';
- 
-// Prevent default scroll on body
-document.body.addEventListener('scroll', e=>e.preventDefault(), {passive:false});
+// ── Chart bars animate on reveal
+const chartObs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.cr-fill').forEach(f=>{ f.style.width=f.dataset.w; });
+      chartObs.unobserve(e.target);
+    }
+  });
+},{threshold:0.3});
+const cr = document.getElementById('chart-rows');
+if(cr) chartObs.observe(cr);
 </script>
 </body>
 </html>
